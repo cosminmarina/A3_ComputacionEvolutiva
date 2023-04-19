@@ -79,11 +79,61 @@ def sampleDistribution(method, n, mean=0, strength=0.01, low=0, up=1):
         exit(1)
     return sample
 
+def laplace(vector, strength):
+    """
+    Adds random noise following a Laplace distribution to the vector.
+    """
+
+    return randNoise(vector, {"method":"Laplace", "F":strength})
+
+
+def cauchy(vector, strength):
+    """
+    Adds random noise following a Cauchy distribution to the vector.
+    """
+    
+    return randNoise(vector, {"method":"Cauchy", "F":strength})
+
+
 def gaussian(vector, strength):
+    """
+    Adds random noise following a Gaussian distribution to the vector.
+    """
+    
     return randNoise(vector, {"method":"Gauss", "F":strength})
 
+
 def uniform(vector, low, up):
+    """
+    Adds random noise following an Uniform distribution to the vector.
+    """
+    
     return randNoise(vector, {"method":"Uniform", "Low":low, "Up":up})
+
+
+def poisson(vector, mu):
+    """
+    Adds random noise following a Poisson distribution to the vector.
+    """
+    
+    return randNoise(vector, {"method":"Poisson", "F":mu})
+
+def cross1p(vector1, vector2):
+    """
+    Performs a 1 point cross between two vectors.
+    """
+    
+    cross_point = random.randrange(0, int(vector1.size/15))
+    return np.hstack([vector1[:int(cross_point*15)], vector2[int(cross_point*15):]])
+
+def cross2p(vector1, vector2):
+    """
+    Performs a 2 point cross between two vectors.
+    """
+    
+    cross_point1 = random.randrange(0, int(vector1.size/15)-2)
+    cross_point2 = random.randrange(cross_point1, int(vector1.size/15))
+    return np.hstack([vector1[:int(cross_point1*15)], vector2[int(cross_point1*15):int(cross_point2*15)], vector1[int(cross_point2*15):]])
 
 def crossDiscrete(vector, population, n, is_sigma=False, is_1stepsize=False):
     result = np.copy(vector)
