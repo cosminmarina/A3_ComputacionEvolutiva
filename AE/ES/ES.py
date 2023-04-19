@@ -1,9 +1,6 @@
 from ..AE import *
 from .ESPopulation import *
 
-"""
-Genetic algorithm optimization
-"""
 class ES(AE):
     """
     Constructor of the Genetic algorithm

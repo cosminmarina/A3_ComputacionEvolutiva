@@ -112,6 +112,8 @@ def run_algorithm(alg_name):
                     alg = ES(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
                 elif alg_name == "DE":
                     alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
+                elif alg_name == "GA":
+                    alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
                 else:
                     print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
                     exit()
@@ -139,7 +141,7 @@ def main():
     parser.add_argument("-a", "--algorithm", dest='alg', help='Specify an algorithm')
     args = parser.parse_args()
 
-    algorithm_name = "ES"
+    algorithm_name = "GA"
     if args.alg:
         algorithm_name = args.alg
    

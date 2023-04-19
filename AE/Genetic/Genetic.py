@@ -1,8 +1,7 @@
 from ..AE import *
 from .GeneticPopulation import *
 
-
-class Genetic(Metaheuristic):
+class Genetic(AE):
     """
     Genetic algorithm optimization algorithm
     """

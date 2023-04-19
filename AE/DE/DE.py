@@ -1,9 +1,6 @@
 from ..AE import *
 from .DEPopulation import *
 
-"""
-Genetic algorithm optimization
-"""
 class DE(AE):
     """
     Constructor of the Genetic algorithm
