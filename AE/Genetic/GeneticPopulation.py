@@ -3,7 +3,7 @@ import numpy as np
 from numba import jit
 from copy import deepcopy
 from AE.Individual import *
-from A2_ComputacionEvolutiva.ParamScheduler import ParamScheduler
+from A3_ComputacionEvolutiva.ParamScheduler import ParamScheduler
 
 
 class GeneticPopulation:

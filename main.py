@@ -1,15 +1,29 @@
 import sys
 sys.path.append("..")
 
-from A2_ComputacionEvolutiva import *
+from A3_ComputacionEvolutiva import *
 from ParamScheduler import *
 from actividad2Funcs import *
+from actividad3Funcs import *
 
 import argparse
 import numpy as np
 import pandas as pd
 
 def generar_curva_progreso(evolucion_fitness, array_bars, pasos_intervalos, ngen, file_name):
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+
+    x = np.arange(ngen)
+
+    plt.errorbar(x, evolucion_fitness, yerr=array_bars, errorevery=pasos_intervalos, capsize=3.0, ecolor='black')
+    plt.ylabel("Fitness")
+    plt.xlabel("Generaciones")
+    plt.title("Curva de progreso")
+    plt.ticklabel_format(axis='y', style="sci", scilimits=None)
+    ax.set_yscale('log')
+    plt.savefig(file_name)
+
     fig = plt.figure()
 
     x = np.arange(ngen)
@@ -19,7 +33,7 @@ def generar_curva_progreso(evolucion_fitness, array_bars, pasos_intervalos, ngen
     plt.xlabel("Generaciones")
     plt.title("Curva de progreso")
     plt.ticklabel_format(axis='y', style="sci", scilimits=None)
-    plt.savefig(file_name)
+    plt.savefig(file_name[:10]+'no-log-'+file_name[10:])
     #plt.show()
 
 def get_pex_for_1(history, counter, success):
@@ -113,7 +127,7 @@ def run_algorithm(alg_name):
                 elif alg_name == "DE":
                     alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
                 elif alg_name == "GA":
-                    alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                    alg = Genetic(objfunc, mutation_op, OperatorReal("Multipoint"), parent_select_op, SurvivorSelection("Elitism", {"amount":5}), params)
                 else:
                     print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
                     exit()

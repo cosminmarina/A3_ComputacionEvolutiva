@@ -85,7 +85,7 @@ class MinApproxFun(ObjectiveFunc):
         mask = (solution < self.lim_min) | (solution > self.lim_max)
         solution[mask] = np.random.random_integers(self.lim_min,self.lim_max,len(mask[mask==True]))
         return solution
-e
+
 if __name__ == "__main__":
     mod_list = np.array([6, 2, 9, 10, 2, 10, 9, 10, 2, 10, 9, 10, 2, 10, 5])
     obj = MinApproxFun(5*15, 20, (lambda x : x**2+4*x-1), mod_list)
