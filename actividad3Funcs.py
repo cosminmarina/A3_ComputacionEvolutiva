@@ -6,7 +6,7 @@ from ObjectiveFunc import ObjectiveFunc
 def kernel_gauss(c, gamma, _, x):
     return np.exp(-gamma * (c - x)**2)
 
-def kernel_polin(alpha, beta, d, x):
+def kernel_polyn(alpha, beta, d, x):
     return (alpha * x + beta)**d
 
 def kernel_sigmoid(delta, theta, _, x):
@@ -30,7 +30,7 @@ def decode_without_wrapping(list_decoded, encoded:[list, np.ndarray], mod_list:n
     return list_decoded, continue_flag
 
 def decodingGE(encoded_vec:[list,np.ndarray], mod_list:np.ndarray, wrapping:int=1):
-    expr = ["kernel_gauss", "kernel_gauss", "kernel_polin", "kernel_polin", "kernel_sigmoid", "kernel_sigmoid"]
+    expr = ["kernel_gauss", "kernel_gauss", "kernel_polyn", "kernel_polyn", "kernel_sigmoid", "kernel_sigmoid"]
     signo = ["+", "-"]
     wrapping = wrapping
     encoded = np.reshape(encoded_vec, (int(len(encoded_vec)/15),15))
@@ -85,7 +85,7 @@ class MinApproxFun(ObjectiveFunc):
         mask = (solution < self.lim_min) | (solution > self.lim_max)
         solution[mask] = np.random.random_integers(self.lim_min,self.lim_max,len(mask[mask==True]))
         return solution
-
+e
 if __name__ == "__main__":
     mod_list = np.array([6, 2, 9, 10, 2, 10, 9, 10, 2, 10, 9, 10, 2, 10, 5])
     obj = MinApproxFun(5*15, 20, (lambda x : x**2+4*x-1), mod_list)
