@@ -22,15 +22,15 @@ def generar_curva_progreso(evolucion_fitness, array_bars, pasos_intervalos, ngen
     plt.savefig(file_name)
     #plt.show()
 
-def get_pex_for_1(history, success):
+def get_pex_for_1(history, counter, success):
     pex = -1
     success_idx = np.where(history < success)
     if np.any(success_idx):
-        pex = success_idx[0][0]
+        pex = int(counter * success_idx[0][0]/len(history))
     return pex 
 
-def get_pex(list_history, success):
-    list_pex = np.array([get_pex_for_1(history, success) for history in list_history])
+def get_pex(list_history, list_counter, success):
+    list_pex = np.array([get_pex_for_1(history, list_counter[idx], success) for idx, history in enumerate(list_history)])
     return np.mean(list_pex[list_pex != -1])
 
 def get_te(list_history, success):
@@ -58,16 +58,16 @@ def run_algorithm(alg_name):
         # General
         "stop_cond": "ngen",
         "time_limit": 20.0,
-        "Ngen": 1500,
+        "Ngen": 150,
         "Neval": 1e5,
         "fit_target": 1000,
 
-        "verbose": False,
+        "verbose": True,
         "v_timer": 0.5,
         "interval_steps":50,
 
         # Metrics
-        "success":1e-38
+        "success":1e-8
     }
 
     operators = [
@@ -94,8 +94,8 @@ def run_algorithm(alg_name):
     list_epsilon = [
         #"1stepsize",
         #"nstepsize"
-        1e-10,
-        1e-17,
+        #1e-10,
+        #1e-17,
         1e-25
     ]
     #mutation_operators 
@@ -105,7 +105,8 @@ def run_algorithm(alg_name):
             params["epsilon"]=epsilon
             list_history = []
             list_best = []
-            for i in range(5):
+            list_counter = []
+            for i in range(2):
                 objfunc.counter = 0
                 if alg_name == "ES":
                     alg = ES(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
@@ -119,8 +120,10 @@ def run_algorithm(alg_name):
                 list_history.append(alg.history)
                 list_best.append(alg.best_solution()[1])
                 alg.display_report(show_plots=False)
+                list_counter.append(alg.objfunc.counter)
             list_history = np.array(list_history)
-            pex = get_pex(list_history, params["success"])
+            list_counter = np.array(list_counter)
+            pex = get_pex(list_history, list_counter, params["success"])
             vamm = get_vamm(list_best)
             te = get_te(list_history, params["success"])
             metrics_list.append([pex, vamm, te])
