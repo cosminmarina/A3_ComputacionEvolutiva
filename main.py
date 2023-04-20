@@ -55,7 +55,7 @@ def get_vamm(list_best):
     return np.mean(list_best)
     
 
-def run_algorithm(alg_name):
+def run_algorithm(alg_name, what_to_compare):
     params = {
         # Population-based
         "popSize": 70,
@@ -67,97 +67,234 @@ def run_algorithm(alg_name):
         # Evolution strategy
         "offspringSize":400,
         "sigma_type":"nstepsize",
+        "epsilon":1e-25,
         #"tau":1/np.sqrt(10),
 
         # General
         "stop_cond": "ngen",
         "time_limit": 20.0,
-        "Ngen": 150,
+        "Ngen": 1500,
         "Neval": 1e5,
-        "fit_target": 1000,
+        "fit_target": 0,
 
-        "verbose": True,
+        "verbose": False,
         "v_timer": 0.5,
         "interval_steps":20,
 
         # Metrics
-        "success":1e-8
+        "success":0.6,
+
+        # Problem
+        "max_kernels":5,
+        "wrapping":1
     }
 
-    operators = [
-        OperatorReal("Multipoint"),
-        #OperatorReal("DE/best/1", {"F":0.7, "Cr":0.8}),
-        OperatorReal("Gauss", {"F":0.001}),
-        OperatorReal("Cauchy", {"F":0.005}),
+    mutation_operators = [
+        OperatorInt("Gauss", {"F":1}),
+        OperatorInt("Gauss", {"F":2}),
+        #OperatorInt("Gauss", {"F":3}),
+        OperatorInt("Gauss", {"F":5}),
+        #OperatorInt("Gauss", {"F":10}),
+        OperatorInt("Cauchy", {"F":1}),
+        OperatorInt("Cauchy", {"F":2}),
+        #OperatorInt("Cauchy", {"F":3}),
+        OperatorInt("Cauchy", {"F":5}),
+        #OperatorInt("Cauchy", {"F":10}),
+        OperatorInt("Poisson", {"F":1}),
+        OperatorInt("Poisson", {"F":2}),
+        #OperatorInt("Poisson", {"F":3}),
+        OperatorInt("Poisson", {"F":5}),
+        #OperatorInt("Poisson", {"F":10}),
     ]
 
-    coeffs = np.random.random_integers(10, size=4*15)
-    print(coeffs)
+    cross_operators = [
+        OperatorInt("1point"),
+        #OperatorInt("2point"),
+        OperatorInt("Multipoint"),
+        #OperatorInt("Multicross"),
+        OperatorInt("CrossInterAvg", {"N":5}),
+    ]
+
+    selection_operators = [
+        ParentSelection("Nothing"),
+        ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0}),
+        #ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.1}),
+        ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.5}),
+        ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.9}),
+    ]
+
+    replace_operators = [
+        SurvivorSelection("Elitism", {"amount":1}),
+        SurvivorSelection("Elitism", {"amount":5}),
+        #SurvivorSelection("Elitism", {"amount":7}),
+        SurvivorSelection("Elitism", {"amount":10}),
+        SurvivorSelection("Generational"),
+        SurvivorSelection("One-to-one"),
+    ]
+
+    operators_to_compare = {
+        "mutation_operators":mutation_operators,
+        "cross_operators":cross_operators,
+        "selection_operators":selection_operators,
+        "replace_operators":replace_operators
+    }
+
+    params_in_objfunc = {
+        "max_kernels" : [2, 5, 6, 10, 20],
+        "wrapping" : [0, 1, 2, 3],
+    }
+
+    params_to_compare = {
+        "popSize" : [10, 50, 70, 100, 150],
+        "pmut" : [0.1, 0.2, 0.5, 0.8, 0.9],
+        "pcross" : [0.1, 0.3, 0.6, 0.9, 0.99],
+    }
+
+    # coeffs = np.random.random_integers(10, size=4*15)
+    # print(coeffs)
+    mod_list = np.array([6, 2, 9, 10, 2, 10, 9, 10, 2, 10, 9, 10, 2, 10, 5], dtype=np.int32)
+    print(mod_list)
     
-    #objfunc = SumPowell(10)
+    prob1_fun = (lambda x : 8 * np.exp(-2 * (x - 2)**2) + 2*x + 1 + 3 * np.tanh(3 * x + 2))
+    prob2_fun = (lambda x : 2 * np.exp(-2 * (x - 1)**2) - np.exp(-(x - 1)**2))
+    prob3_fun = (lambda x : np.sqrt(x))
+    prob4_fun = (lambda x : np.exp(-x) * np.sin(2*x))
+
+    list_target_names = ["prob1_fun", "prob2_fun", "prob3_fun", "prob4_fun"]
+
     list_objfunc = [
-        #SumPowell(10),
-        #N4XinSheYang(10),
-        MaxOnes(4*15),
-        DiophantineEq(4*15, coeffs, 5)
+        #MinApproxFun(params["max_kernels"]*15, 61, prob1_fun, mod_list, lim_min=-2, lim_max=4, wrapping=params["wrapping"]),
+        MinApproxFun(params["max_kernels"]*15, 41, prob2_fun, mod_list, lim_min=-1, lim_max=3, wrapping=params["wrapping"]),
+        MinApproxFun(params["max_kernels"]*15, 41, prob3_fun, mod_list, lim_min=0, lim_max=4, wrapping=params["wrapping"]),
+        #MinApproxFun(params["max_kernels"]*15, 41, prob4_fun, mod_list, lim_min=0, lim_max=4, wrapping=params["wrapping"])
     ]
 
-    #mutation_op = OperatorReal("Gauss", {"F": 0.001})
     mutation_op = OperatorInt("Gauss", {"F": 1})
-    # mutation_op = OperatorReal("Gauss", ParamScheduler("Lineal", {"F":[0.1, 0.001]}))
-    #cross_op = OperatorReal("CrossDiscrete", {"N": 5})
-    #cross_op = OperatorReal("CrossInterAvg", {"N": 5})
     cross_op = OperatorInt("1point")
-    # parent_select_op = ParentSelection("Tournament", {"amount": 3, "p":0.1})
-    parent_select_op = ParentSelection("Nothing")#, ParamScheduler("Lineal", {"amount": [2, 7], "p":0.1}))
-    replace_op = SurvivorSelection("(m+n)")
+    parent_select_op = ParentSelection("Nothing")
+    replace_op = SurvivorSelection("Elitism", {"amount":5})
 
-    list_epsilon = [
-        #"1stepsize",
-        #"nstepsize"
-        #1e-10,
-        #1e-17,
-        1e-25
-    ]
-    #mutation_operators 
-    for objfunc in list_objfunc:
-        metrics_list = []
-        for epsilon in list_epsilon:
-            params["epsilon"]=epsilon
-            list_history = []
-            list_best = []
-            list_counter = []
-            for i in range(2):
-                objfunc.counter = 0
-                if alg_name == "ES":
-                    alg = ES(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
-                elif alg_name == "DE":
-                    alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
-                elif alg_name == "GA":
-                    alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, SurvivorSelection("Elitism", {"amount":5}), params)
-                else:
-                    print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
-                    exit()
-                    
-                ind, fit = alg.optimize()
-                list_history.append(alg.history)
-                list_best.append(alg.best_solution()[1])
-                alg.display_report(show_plots=False)
-                list_counter.append(alg.objfunc.counter)
-            list_history = np.array(list_history)
-            list_counter = np.array(list_counter)
-            pex = get_pex(list_history, list_counter, params["success"])
-            vamm = get_vamm(list_best)
-            te = get_te(list_history, params["success"])
-            metrics_list.append([pex, vamm, te])
-            mean_history = list_history.mean(axis=0)
-            std_history = list_history.std(axis=0)
-            generar_curva_progreso(mean_history, std_history, params["interval_steps"], params["Ngen"], f'./figures/studing-epsilon{params["epsilon"]}-function{objfunc.name}-pex{pex}-vamm{vamm}-te{te}.png')
-        metrics_df = pd.DataFrame(np.array(metrics_list), index=[list_epsilon], columns=['pex','vamm','te'])
-        metrics_df.to_csv(f'./comparison-csv/metrics-objfunc{objfunc.name}-epsilon.csv')
-        params["success"]=0.000165
+    if what_to_compare=='p':
+        for idx, objfunc in enumerate(list_objfunc):
+            for key in params_to_compare.keys():
+                metrics_list = []
+                for value in params_to_compare[key]:
+                    params[key]=value
+                    list_history = []
+                    list_best = []
+                    list_counter = []
+                    for i in range(5):
+                        objfunc.counter = 0
+                        if alg_name == "ES":
+                            alg = ES(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                        elif alg_name == "DE":
+                            alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
+                        elif alg_name == "GA":
+                            alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                        else:
+                            print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
+                            exit()
+                            
+                        ind, fit = alg.optimize()
+                        list_history.append(alg.history)
+                        list_best.append(alg.best_solution()[1])
+                        alg.display_report(show_plots=False)
+                        list_counter.append(alg.objfunc.counter)
+                    list_history = np.array(list_history)
+                    list_counter = np.array(list_counter)
+                    pex = get_pex(list_history, list_counter, params["success"])
+                    vamm = get_vamm(list_best)
+                    te = get_te(list_history, params["success"])
+                    metrics_list.append([pex, vamm, te])
+                    mean_history = list_history.mean(axis=0)
+                    std_history = list_history.std(axis=0)
+                    generar_curva_progreso(mean_history, std_history, params["interval_steps"], params["Ngen"], f'./figures/studing-{key}{value}-function{objfunc.name}-{list_target_names[idx]}-pex{pex}-vamm{vamm}-te{te}.png')
+                metrics_df = pd.DataFrame(np.array(metrics_list), index=[params_to_compare[key]], columns=['pex','vamm','te'])
+                metrics_df.to_csv(f'./comparison-csv/metrics-objfunc{objfunc.name}-{list_target_names[idx]}-{key}.csv')
+    elif what_to_compare=='i':
+        for idx, objfunc in enumerate(list_objfunc):
+            for key in params_in_objfunc.keys():
+                metrics_list = []
+                for value in params_in_objfunc[key]:
+                    setattr(objfunc, key, value)
+                    list_history = []
+                    list_best = []
+                    list_counter = []
+                    for i in range(5):
+                        objfunc.counter = 0
+                        if alg_name == "ES":
+                            alg = ES(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                        elif alg_name == "DE":
+                            alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
+                        elif alg_name == "GA":
+                            alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                        else:
+                            print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
+                            exit()
+                            
+                        ind, fit = alg.optimize()
+                        list_history.append(alg.history)
+                        list_best.append(alg.best_solution()[1])
+                        alg.display_report(show_plots=False)
+                        list_counter.append(alg.objfunc.counter)
+                    list_history = np.array(list_history)
+                    list_counter = np.array(list_counter)
+                    pex = get_pex(list_history, list_counter, params["success"])
+                    vamm = get_vamm(list_best)
+                    te = get_te(list_history, params["success"])
+                    metrics_list.append([pex, vamm, te])
+                    mean_history = list_history.mean(axis=0)
+                    std_history = list_history.std(axis=0)
+                    generar_curva_progreso(mean_history, std_history, params["interval_steps"], params["Ngen"], f'./figures/studing-{key}{value}-function{objfunc.name}-{list_target_names[idx]}-pex{pex}-vamm{vamm}-te{te}.png')
+                metrics_df = pd.DataFrame(np.array(metrics_list), index=[params_in_objfunc[key]], columns=['pex','vamm','te'])
+                metrics_df.to_csv(f'./comparison-csv/metrics-objfunc{objfunc.name}-{list_target_names[idx]}-{key}.csv')
+    else:
+        for idx, objfunc in enumerate(list_objfunc):
+            for key in operators_to_compare.keys():
+                metrics_list = []
+                for value in operators_to_compare[key]:
+                    if key=="mutation_operators":
+                        mutation_op = value
+                    elif key=="cross_operators":
+                        cross_op = value
+                    elif key=="selection_operators":
+                        parent_select_op = value
+                    elif key=="replace_operators":
+                        replace_op = value
+                    list_history = []
+                    list_best = []
+                    list_counter = []
+                    for i in range(5):
+                        objfunc.counter = 0
+                        if alg_name == "ES":
+                            alg = ES(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                        elif alg_name == "DE":
+                            alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
+                        elif alg_name == "GA":
+                            alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                        else:
+                            print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
+                            exit()
+                            
+                        ind, fit = alg.optimize()
+                        list_history.append(alg.history)
+                        list_best.append(alg.best_solution()[1])
+                        alg.display_report(show_plots=False)
+                        list_counter.append(alg.objfunc.counter)
+                    list_history = np.array(list_history)
+                    list_counter = np.array(list_counter)
+                    pex = get_pex(list_history, list_counter, params["success"])
+                    vamm = get_vamm(list_best)
+                    te = get_te(list_history, params["success"])
+                    metrics_list.append([pex, vamm, te])
+                    mean_history = list_history.mean(axis=0)
+                    std_history = list_history.std(axis=0)
+                    generar_curva_progreso(mean_history, std_history, params["interval_steps"], params["Ngen"], f'./figures/studing-{key}{value.name}-function{objfunc.name}-{list_target_names[idx]}-pex{pex}-vamm{vamm}-te{te}.png')
+                metrics_df = pd.DataFrame(np.array(metrics_list), index=[operators_to_compare[key]], columns=['pex','vamm','te'])
+                metrics_df.to_csv(f'./comparison-csv/metrics-objfunc{objfunc.name}-{list_target_names[idx]}-{key}.csv')
 
-def main():
+
+def main(what_to_compare='p'):
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--algorithm", dest='alg', help='Specify an algorithm')
     args = parser.parse_args()
@@ -166,7 +303,7 @@ def main():
     if args.alg:
         algorithm_name = args.alg
    
-    run_algorithm(alg_name = algorithm_name)
+    run_algorithm(alg_name = algorithm_name, what_to_compare = what_to_compare)
 
 if __name__ == "__main__":
-    main()
+    main('p')

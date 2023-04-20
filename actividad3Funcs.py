@@ -18,7 +18,7 @@ def real(list, signo=["+", "-"]):
 def decode_without_wrapping(list_decoded, encoded:[list, np.ndarray], mod_list:np.ndarray, expr, signo, continue_flag):
     for elem in encoded:
         if continue_flag:
-            computed_mod = elem % mod_list
+            computed_mod = (elem % mod_list).astype(np.int32)
             kernel_weight = eval(signo[computed_mod[1]] + real(computed_mod[2:6]))
             kernel_name = expr[computed_mod[0]]
             param1, param2, param3 = eval(real(computed_mod[6:10])), eval(real(computed_mod[10:14])), computed_mod[14]
@@ -47,7 +47,7 @@ class MinApproxFun(ObjectiveFunc):
     """
     Function of minimum error to approximate a target function with kernels
     """
-    def __init__(self, size, m_samples, target_function, mod_list, opt="min", lim_min=-1, lim_max=1, threshold=1e-1, penalty0=1, penalty1=10):
+    def __init__(self, size, m_samples, target_function, mod_list, opt="min", lim_min=-1, lim_max=1, threshold=1e-1, penalty0=1, penalty1=10, wrapping=1):
         self.size = size
         self.lim_min = lim_min
         self.lim_max = lim_max
@@ -58,10 +58,11 @@ class MinApproxFun(ObjectiveFunc):
         self.mod_list = mod_list
         self.m_samples = m_samples
         self.x = np.linspace(self.lim_min, self.lim_max, self.m_samples)
+        self.wrapping=wrapping
         super().__init__(self.size, opt, "MinApproxFun")
     
     def objective(self, solution):
-        decoded = decodingGE(solution, self.mod_list)
+        decoded = decodingGE(solution, self.mod_list, self.wrapping)
         f_hat = [kernel[1]*eval(kernel[0])(kernel[2], kernel[3], kernel[4], self.x) for kernel in decoded]
         f = self.target_function(self.x)
         abs_err = np.abs(f - f_hat)
