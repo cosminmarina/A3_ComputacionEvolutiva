@@ -78,7 +78,7 @@ def run_algorithm(alg_name):
 
         "verbose": True,
         "v_timer": 0.5,
-        "interval_steps":50,
+        "interval_steps":20,
 
         # Metrics
         "success":1e-8
@@ -91,16 +91,23 @@ def run_algorithm(alg_name):
         OperatorReal("Cauchy", {"F":0.005}),
     ]
 
+    coeffs = np.random.random_integers(10, size=4*15)
+    print(coeffs)
+    
     #objfunc = SumPowell(10)
     list_objfunc = [
-        SumPowell(10),
-        N4XinSheYang(10)
+        #SumPowell(10),
+        #N4XinSheYang(10),
+        MaxOnes(4*15),
+        DiophantineEq(4*15, coeffs, 5)
     ]
 
-    mutation_op = OperatorReal("Gauss", {"F": 0.001})
+    #mutation_op = OperatorReal("Gauss", {"F": 0.001})
+    mutation_op = OperatorInt("Gauss", {"F": 1})
     # mutation_op = OperatorReal("Gauss", ParamScheduler("Lineal", {"F":[0.1, 0.001]}))
     #cross_op = OperatorReal("CrossDiscrete", {"N": 5})
-    cross_op = OperatorReal("CrossInterAvg", {"N": 5})
+    #cross_op = OperatorReal("CrossInterAvg", {"N": 5})
+    cross_op = OperatorInt("1point")
     # parent_select_op = ParentSelection("Tournament", {"amount": 3, "p":0.1})
     parent_select_op = ParentSelection("Nothing")#, ParamScheduler("Lineal", {"amount": [2, 7], "p":0.1}))
     replace_op = SurvivorSelection("(m+n)")
@@ -127,7 +134,7 @@ def run_algorithm(alg_name):
                 elif alg_name == "DE":
                     alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
                 elif alg_name == "GA":
-                    alg = Genetic(objfunc, mutation_op, OperatorReal("Multipoint"), parent_select_op, SurvivorSelection("Elitism", {"amount":5}), params)
+                    alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, SurvivorSelection("Elitism", {"amount":5}), params)
                 else:
                     print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
                     exit()

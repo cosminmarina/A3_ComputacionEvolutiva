@@ -16,7 +16,7 @@ class OperatorInt(Operator):
         super().__init__(self.name, params)
     
     
-    def evolve(self, solution, population, objfunc):
+    def evolve(self, solution, population, objfunc, sigmas=None, pos=0, is_1stepsize=False):
         """
         Evolves a solution with a different strategy depending on the type of operator
         """

@@ -93,13 +93,20 @@ def cond_elitism(popul, offspring, amount):
     
     return new_offspring
 
-def lamb_plus_mu(popul, offspring, sigma, sigma_offspring):
-    population = popul + offspring
-    sigma_popul = sigma + sigma_offspring
-    idx = np.flip(np.argsort(population))
-    return list(np.array(population)[idx][:len(popul)]), list(np.array(sigma_popul)[idx][:len(popul)])
+def lamb_plus_mu(popul, offspring, sigma=None, sigma_offspring=None):
+    if sigma is None:
+        population = popul + offspring
+        return sorted(population, reverse=True, key = lambda x: x.fitness)[:len(popul)]
+    else:
+        population = popul + offspring
+        sigma_popul = sigma + sigma_offspring
+        idx = np.flip(np.argsort(population))
+        return list(np.array(population)[idx][:len(popul)]), list(np.array(sigma_popul)[idx][:len(popul)])
 
 
-def lamb_comma_mu(popul, offspring, sigma, sigma_offspring):
-    idx = np.flip(np.argsort(offspring))
+def lamb_comma_mu(popul, offspring, sigma=None, sigma_offspring=None):
+    if sigma is None:
+        return sorted(offspring, reverse=True, key = lambda x: x.fitness)[:len(popul)]
+    else:
+        idx = np.flip(np.argsort(offspring))
     return list(np.array(offspring)[idx][:len(popul)]), list(np.array(sigma_offspring)[idx][:len(popul)])

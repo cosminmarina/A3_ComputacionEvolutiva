@@ -77,6 +77,41 @@ class N4XinSheYang(ObjectiveFunc):
             solution[mask] = np.random.random(len(mask[mask==True])) * (self.lim_max - self.lim_min) - self.lim_min
         return solution
 
+class DiophantineEq(ObjectiveFunc):
+    def __init__(self, size, coeff, target, opt="min"):
+        self.size = size
+        self.coeff = coeff
+        self.target = target
+        super().__init__(self.size, opt, "Diophantine equation")
+    
+    def objective(self, solution):
+        return abs((solution*self.coeff).sum() - self.target)
+    
+    def random_solution(self):
+        return (np.random.randint(-100, 100, size=self.size)).astype(np.int32)
+    
+    def check_bounds(self, solution):
+        return solution.astype(np.int32)
+
+class MaxOnes(ObjectiveFunc):
+    """
+    Example of objective function.
+
+    Counts the number of ones in the array
+    """
+    def __init__(self, size, opt="max"):
+        self.size = size
+        super().__init__(self.size, opt, "Max ones")
+
+    def objective(self, solution):
+        return solution.sum()
+    
+    def random_solution(self):
+        return (np.random.random(self.size) < 0.5).astype(np.int32)
+    
+    def check_bounds(self, solution):
+        return (solution.copy() >= 0.5).astype(np.int32)
+
 if __name__ == "__main__":
     plot_functions_n_eq_2 = True
     if plot_functions_n_eq_2:
