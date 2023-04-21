@@ -134,9 +134,9 @@ def run_algorithm(alg_name, what_to_compare):
 
     operators_to_compare = {
         "mutation_operators":mutation_operators,
-        "cross_operators":cross_operators,
-        "selection_operators":selection_operators,
-        "replace_operators":replace_operators
+        #"cross_operators":cross_operators,
+        #"selection_operators":selection_operators,
+        #"replace_operators":replace_operators
     }
 
     params_in_objfunc = {
@@ -306,4 +306,4 @@ def main(what_to_compare='p'):
     run_algorithm(alg_name = algorithm_name, what_to_compare = what_to_compare)
 
 if __name__ == "__main__":
-    main('p')
+    main('o')

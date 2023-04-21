@@ -74,6 +74,12 @@ def sampleDistribution(method, n, mean=0, strength=0.01, low=0, up=1):
         sample = np.random.normal(mean, strength, size=n)
     elif method == "Uniform":
         sample = np.random.uniform(low, up, size=n)
+    elif method == "Cauchy":
+        sample = sp.stats.cauchy.rvs(mean, strength, size=n)
+    elif method == "Poisson":
+        sample = sp.stats.poisson.rvs(mean, strength, size=n)
+    elif method == "Laplace":
+        sample = sp.stats.laplace.rvs(mean, strength, size=n)
     else:
         print(f"Error: distribution \"{method}\" not defined")
         exit(1)
