@@ -10,6 +10,27 @@ import argparse
 import numpy as np
 import pandas as pd
 
+def comparar_funciones(list_min_aprox, list_best, objfunc, name):
+    idx = np.argsort(list_best).astype(np.int32)
+    best = list_min_aprox[idx[0]]
+    best_decoded = decodingGE(best, objfunc.mod_list, objfunc.wrapping)
+    np.savetxt(f'./best-sol{name}.txt', best_decoded, fmt="%s", delimiter=',')
+    
+    fig = plt.figure()
+
+    x = objfunc.x
+
+    plt.plot(objfunc.target_function(x), label="Original")
+    f_hat = np.array([kernel[1]*eval(kernel[0])(kernel[2], kernel[3], kernel[4], x) for kernel in best_decoded])
+    plt.plot(f_hat.sum(axis=0), label="Aproximated")
+    plt.ylabel("Funcion")
+    plt.xlabel("X")
+    plt.title("Comparativa aproximación")
+    plt.legend()
+    plt.ticklabel_format(axis='y', style="sci", scilimits=None)
+    plt.savefig(f'./figures/best-sol{name}.png')
+    
+
 def generar_curva_progreso(evolucion_fitness, array_bars, pasos_intervalos, ngen, file_name):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
@@ -61,7 +82,7 @@ def run_algorithm(alg_name, what_to_compare):
         "popSize": 70,
 
         # Genetic algorithm
-        "pmut": 0.2,
+        "pmut": 0.5,
         "pcross":0.9,
 
         # Evolution strategy
@@ -86,7 +107,7 @@ def run_algorithm(alg_name, what_to_compare):
 
         # Problem
         "max_kernels":5,
-        "wrapping":1
+        "wrapping":2
     }
 
     mutation_operators = [
@@ -133,7 +154,7 @@ def run_algorithm(alg_name, what_to_compare):
     ]
 
     operators_to_compare = {
-        "mutation_operators":mutation_operators,
+        #"mutation_operators":mutation_operators,
         "cross_operators":cross_operators,
         "selection_operators":selection_operators,
         "replace_operators":replace_operators
@@ -163,16 +184,16 @@ def run_algorithm(alg_name, what_to_compare):
     list_target_names = ["prob1_fun", "prob2_fun", "prob3_fun", "prob4_fun"]
 
     list_objfunc = [
-        #MinApproxFun(params["max_kernels"]*15, 61, prob1_fun, mod_list, lim_min=-2, lim_max=4, wrapping=params["wrapping"]),
+        MinApproxFun(params["max_kernels"]*15, 61, prob1_fun, mod_list, lim_min=-2, lim_max=4, wrapping=params["wrapping"]),
         MinApproxFun(params["max_kernels"]*15, 41, prob2_fun, mod_list, lim_min=-1, lim_max=3, wrapping=params["wrapping"]),
         MinApproxFun(params["max_kernels"]*15, 41, prob3_fun, mod_list, lim_min=0, lim_max=4, wrapping=params["wrapping"]),
-        #MinApproxFun(params["max_kernels"]*15, 41, prob4_fun, mod_list, lim_min=0, lim_max=4, wrapping=params["wrapping"])
+        MinApproxFun(params["max_kernels"]*15, 41, prob4_fun, mod_list, lim_min=0, lim_max=4, wrapping=params["wrapping"])
     ]
 
     mutation_op = OperatorInt("Gauss", {"F": 1})
-    cross_op = OperatorInt("1point")
-    parent_select_op = ParentSelection("Nothing")
-    replace_op = SurvivorSelection("Elitism", {"amount":5})
+    cross_op = OperatorInt("Multipoint")
+    parent_select_op = ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.5})
+    replace_op = SurvivorSelection("One-to-one")
 
     if what_to_compare=='p':
         for idx, objfunc in enumerate(list_objfunc):
@@ -248,6 +269,43 @@ def run_algorithm(alg_name, what_to_compare):
                     generar_curva_progreso(mean_history, std_history, params["interval_steps"], params["Ngen"], f'./figures/studing-{key}{value}-function{objfunc.name}-{list_target_names[idx]}-pex{pex}-vamm{vamm}-te{te}.png')
                 metrics_df = pd.DataFrame(np.array(metrics_list), index=[params_in_objfunc[key]], columns=['pex','vamm','te'])
                 metrics_df.to_csv(f'./comparison-csv/metrics-objfunc{objfunc.name}-{list_target_names[idx]}-{key}.csv')
+    elif what_to_compare=='b':
+        metrics_list = []
+        for idx, objfunc in enumerate(list_objfunc):
+            list_history = []
+            list_best = []
+            list_counter = []
+            list_min_aprox = []
+            for i in range(5):
+                objfunc.counter = 0
+                if alg_name == "ES":
+                    alg = ES(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                elif alg_name == "DE":
+                    alg = DE(objfunc, OperatorReal("DE/current-to-best/1", {"F":0.8, "Cr":0.9}), SurvivorSelection("One-to-one"), params)
+                elif alg_name == "GA":
+                    alg = Genetic(objfunc, mutation_op, cross_op, parent_select_op, replace_op, params)
+                else:
+                    print(f"Error: Algorithm \"{alg_name}\" doesn't exist.")
+                    exit()
+
+                ind, fit = alg.optimize()
+                list_history.append(alg.history)
+                list_best.append(alg.best_solution()[1])
+                list_min_aprox.append(alg.best_solution()[0])
+                alg.display_report(show_plots=False)
+                list_counter.append(alg.objfunc.counter)
+            list_history = np.array(list_history)
+            list_counter = np.array(list_counter)
+            pex = get_pex(list_history, list_counter, params["success"])
+            vamm = get_vamm(list_best)
+            te = get_te(list_history, params["success"])
+            comparar_funciones(list_min_aprox, list_best, objfunc, list_target_names[idx])
+            metrics_list.append([pex, vamm, te])
+            mean_history = list_history.mean(axis=0)
+            std_history = list_history.std(axis=0)
+            generar_curva_progreso(mean_history, std_history, params["interval_steps"], params["Ngen"], f'./figures/best-params-function{objfunc.name}-{list_target_names[idx]}-pex{pex}-vamm{vamm}-te{te}.png')
+        metrics_df = pd.DataFrame(np.array(metrics_list), index=[list_target_names], columns=['pex','vamm','te'])
+        metrics_df.to_csv(f'./comparison-csv/metrics-best-params-objfunc{objfunc.name}-{list_target_names}.csv')
     else:
         for idx, objfunc in enumerate(list_objfunc):
             for key in operators_to_compare.keys():
@@ -306,4 +364,4 @@ def main(what_to_compare='p'):
     run_algorithm(alg_name = algorithm_name, what_to_compare = what_to_compare)
 
 if __name__ == "__main__":
-    main('o')
+    main('b')
