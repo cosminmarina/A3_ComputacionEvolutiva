@@ -23,7 +23,7 @@ def decode_without_wrapping(list_decoded, encoded:[list, np.ndarray], mod_list:n
             kernel_name = expr[computed_mod[0]]
             param1, param2, param3 = eval(real(computed_mod[6:10])), eval(real(computed_mod[10:14])), computed_mod[14]
             list_decoded.append([kernel_name, kernel_weight, param1, param2, param3])
-            if computed_mod[0] % 2!=0:
+            if computed_mod[0] % 2==0:
                 continue_flag = False
         else:
             break
