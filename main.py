@@ -108,19 +108,19 @@ def run_algorithm(alg_name, what_to_compare):
     ]
 
     cross_operators = [
-        OperatorInt("1point"),
         #OperatorInt("2point"),
         OperatorInt("Multipoint"),
         #OperatorInt("Multicross"),
         OperatorInt("CrossInterAvg", {"N":5}),
+        OperatorInt("1point"),
     ]
 
     selection_operators = [
-        ParentSelection("Nothing"),
-        ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0}),
+        ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.1}),
         #ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.1}),
         ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.5}),
         ParentSelection("Tournament", {"amount":params["popSize"], "p" : 0.9}),
+        ParentSelection("Nothing"),
     ]
 
     replace_operators = [
@@ -134,9 +134,9 @@ def run_algorithm(alg_name, what_to_compare):
 
     operators_to_compare = {
         "mutation_operators":mutation_operators,
-        #"cross_operators":cross_operators,
-        #"selection_operators":selection_operators,
-        #"replace_operators":replace_operators
+        "cross_operators":cross_operators,
+        "selection_operators":selection_operators,
+        "replace_operators":replace_operators
     }
 
     params_in_objfunc = {
